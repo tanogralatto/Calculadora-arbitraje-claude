@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Calculadora de Arbitraje Deportivo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gl: #EAF3DE; --gm: #97C459; --gd: #639922; --gt: #27500A; --gs: #3B6D11;
+      --rl: #FCEBEB; --rm: #F09595; --rd: #A32D2D; --rt: #501313;
+      --bg: #f5f5f3; --bgc: #ffffff; --bgi: #ebebea;
+      --tx: #1a1a18; --tm: #777; --bo: rgba(0,0,0,0.13); --bi: rgba(0,0,0,0.18);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#1a1a18; --bgc:#252523; --bgi:#2e2e2c; --tx:#f0f0ee; --tm:#999; --bo:rgba(255,255,255,0.1); --bi:rgba(255,255,255,0.15); }
+    }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--tx); min-height:100vh; display:flex; justify-content:center; padding:2rem 1rem 4rem; }
+    .app { width:100%; max-width:540px; }
+    .header { margin-bottom:1.5rem; }
+    .header h1 { font-size:22px; font-weight:500; margin-bottom:4px; }
+    .header p { font-size:13px; color:var(--tm); }
+    .card { background:var(--bgc); border:0.5px solid var(--bo); border-radius:12px; padding:1.25rem; margin-bottom:1rem; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .field label, .full label { font-size:12px; color:var(--tm); font-weight:500; letter-spacing:.02em; }
+    .full label { display:block; margin-bottom:6px; }
+    input { width:100%; height:48px; font-size:22px; font-weight:500; padding:0 14px; border:0.5px solid var(--bi); border-radius:8px; background:var(--bgi); color:var(--tx); text-align:right; outline:none; font-family:inherit; -webkit-appearance:none; }
+    input:focus { border-color:rgba(0,0,0,.35); box-shadow:0 0 0 3px rgba(0,0,0,.05); }
+    .hint { font-size:11px; color:var(--tm); margin-top:3px; text-align:right; }
+    .sb { border-radius:10px; padding:14px 16px; margin-bottom:1rem; display:flex; align-items:center; gap:12px; }
+    .sb.arb    { background:var(--gl); border:.5px solid var(--gm); }
+    .sb.no-arb { background:var(--rl); border:.5px solid var(--rm); }
+    .sb.empty  { background:var(--bgi); border:.5px solid var(--bo); }
+    .si { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .sb.arb    .si { background:var(--gd); }
+    .sb.no-arb .si { background:var(--rd); }
+    .sb.empty  .si { background:var(--bi); }
+    .st { flex:1; }
+    .stitle { font-size:15px; font-weight:500; }
+    .sb.arb    .stitle { color:var(--gt); }
+    .sb.no-arb .stitle { color:var(--rt); }
+    .sb.empty  .stitle { color:var(--tm); }
+    .ssub { font-size:12px; margin-top:2px; }
+    .sb.arb    .ssub { color:var(--gs); }
+    .sb.no-arb .ssub { color:var(--rd); }
+    .sb.empty  .ssub { color:var(--tm); }
+    .badge { font-size:13px; font-weight:500; padding:4px 10px; border-radius:6px; white-space:nowrap; }
+    .sb.arb    .badge { background:var(--gd); color:var(--gl); }
+    .sb.no-arb .badge { background:var(--rd); color:var(--rl); }
+    .sb.empty  .badge { display:none; }
+    .sec { font-size:11px; font-weight:500; color:var(--tm); text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; }
+    .sr { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:.5px solid var(--bo); }
+    .sr.nb { border-bottom:none; }
+    .sl { font-size:13px; color:var(--tm); }
+    .sl.tot { font-weight:500; color:var(--tx); }
+    .sright { text-align:right; }
+    .sa { font-size:16px; font-weight:500; }
+    .sp { font-size:12px; color:var(--tm); margin-top:2px; }
+    .div { height:.5px; background:var(--bo); margin:4px 0; }
+    .rg { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .m { background:var(--bgi); border-radius:8px; padding:14px 16px; }
+    .m label { font-size:11px; color:var(--tm); font-weight:500; text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:6px; }
+    .m .v { font-size:22px; font-weight:500; }
+    .m .s { font-size:12px; color:var(--tm); margin-top:2px; }
+    .m.hg { background:var(--gl); } .m.hg .v { color:var(--gt); }
+    .m.hr { background:var(--rl); } .m.hr .v { color:var(--rt); }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Calculadora de arbitraje</h1>
+    <p>Ingresá las cuotas y el monto total a apostar</p>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div class="field">
+        <label>Cuota A</label>
+        <input type="text" id="cA" value="2.63" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="hint">ej: 2.50</div>
+      </div>
+      <div class="field">
+        <label>Cuota B</label>
+        <input type="text" id="cB" value="1.84" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="hint">ej: 1.75</div>
+      </div>
+    </div>
+    <div class="full">
+      <label>Monto total ($)</label>
+      <input type="text" id="mo" value="50000" inputmode="numeric" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+  </div>
+  <div class="sb empty" id="sb">
+    <div class="si"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path id="sp" d="" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="st"><div class="stitle" id="stitle">Ingresá los datos</div><div class="ssub" id="ssub">Completá las cuotas y el monto</div></div>
+    <div class="badge" id="badge"></div>
+  </div>
+  <div class="card">
+    <p class="sec">Distribución de stakes</p>
+    <div class="sr"><div class="sl">Stake A</div><div class="sright"><div class="sa" id="sA">—</div><div class="sp" id="sAp"></div></div></div>
+    <div class="sr"><div class="sl">Stake B</div><div class="sright"><div class="sa" id="sB">—</div><div class="sp" id="sBp"></div></div></div>
+    <div class="div"></div>
+    <div class="sr nb"><div class="sl tot">Total</div><div class="sa" id="tot">—</div></div>
+  </div>
+  <div class="rg">
+    <div class="m" id="gc"><label>Ganancia neta</label><div class="v" id="gan">—</div><div class="s" id="ganp"></div></div>
+    <div class="m" id="rc"><label>Retorno garantizado</label><div class="v" id="ret">—</div><div class="s">retorno mínimo</div></div>
+  </div>
+</div>
+<script>
+function pn(v){var s=String(v).trim().replace(/\s/g,'').replace(',','.');var n=parseFloat(s);return isNaN(n)?NaN:n;}
+function fmt(n){return '$'+Math.round(n).toLocaleString('es-AR');}
+function reset(){
+  document.getElementById('sb').className='sb empty';
+  document.getElementById('stitle').textContent='Ingresá los datos';
+  document.getElementById('ssub').textContent='Cuotas deben ser mayores a 1';
+  document.getElementById('badge').textContent='';
+  document.getElementById('sp').setAttribute('d','');
+  ['sA','sB','tot','gan','ret'].forEach(function(id){document.getElementById(id).textContent='—';});
+  ['sAp','sBp','ganp'].forEach(function(id){document.getElementById(id).textContent='';});
+  document.getElementById('gc').className='m';
+  document.getElementById('rc').className='m';
+}
+function calc(){
+  var a=pn(document.getElementById('cA').value);
+  var b=pn(document.getElementById('cB').value);
+  var m=pn(document.getElementById('mo').value);
+  if(isNaN(a)||isNaN(b)||isNaN(m)||a<=1||b<=1||m<=0){reset();return;}
+  var iA=1/a, iB=1/b, sum=iA+iB;
+  var isArb=sum<1;
+  var mAbs=Math.abs((sum-1)*100).toFixed(2);
+  var sA=(m*iA)/sum, sB=(m*iB)/sum;
+  var rA=sA*a, rB=sB*b;
+  var guaranteed=Math.min(rA,rB);
+  var ganancia=guaranteed-m;
+  var sb=document.getElementById('sb');
+  var badge=document.getElementById('badge');
+  if(isArb){
+    sb.className='sb arb';
+    document.getElementById('stitle').textContent='Arbitraje detectado';
+    document.getElementById('ssub').textContent='Ganancia garantizada sin importar el resultado';
+    document.getElementById('sp').setAttribute('d','M3 8l4 4 6-6');
+    badge.textContent='-'+mAbs+'%';
+    document.getElementById('gc').className='m hg';
+    document.getElementById('rc').className='m hg';
+  } else {
+    sb.className='sb no-arb';
+    document.getElementById('stitle').textContent='Sin arbitraje';
+    document.getElementById('ssub').textContent='La casa tiene ventaja del '+mAbs+'%';
+    document.getElementById('sp').setAttribute('d','M4 4l8 8M12 4l-8 8');
+    badge.textContent='+'+mAbs+'%';
+    document.getElementById('gc').className='m hr';
+    document.getElementById('rc').className='m hr';
+  }
+  document.getElementById('sA').textContent=fmt(sA);
+  document.getElementById('sB').textContent=fmt(sB);
+  document.getElementById('sAp').textContent=((sA/m)*100).toFixed(1)+'% del total';
+  document.getElementById('sBp').textContent=((sB/m)*100).toFixed(1)+'% del total';
+  document.getElementById('tot').textContent=fmt(m);
+  document.getElementById('gan').textContent=fmt(ganancia);
+  document.getElementById('ganp').textContent=(ganancia>=0?'+':'')+((ganancia/m)*100).toFixed(2)+'% de rendimiento';
+  document.getElementById('ret').textContent=fmt(guaranteed);
+}
+document.getElementById('cA').addEventListener('input',calc);
+document.getElementById('cB').addEventListener('input',calc);
+document.getElementById('mo').addEventListener('input',calc);
+calc();
+</script>
+</body>
+</html>
